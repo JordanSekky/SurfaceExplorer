@@ -1,4 +1,3 @@
-
 from math import *
 from visual import *
 # from time import sleep
@@ -146,12 +145,13 @@ class surface():
             while(v<vRng[1]):
                 self.fList += [self.posn(u,v),self.posn(u+uRng[2],v),self.posn(u,v+vRng[2])]
                 self.fList += [self.posn(u+uRng[2],v),self.posn(u,v+vRng[2]),self.posn(u+uRng[2],v+vRng[2])]
-                curve(pos=[self.posn(u+uRng[2],v),self.posn(u,v),self.posn(u,v+vRng[2])], radius=0.03,color=color.blue)
+                curve(pos=[self.posn(u+uRng[2],v),self.posn(u,v),self.posn(u,v+vRng[2])], radius=0.05,color=color.black)
                 v+=vRng[2]
             u+=uRng[2]
-        s = faces(pos=self.fList)
-        s.make_twosided()
-        s.smooth()
+        self.s = faces(pos=self.fList)
+        self.s.make_normals()
+        self.s.make_twosided()
+        self.s.smooth()
 
 
     def posn(self,u,v):
@@ -182,6 +182,7 @@ class ball():
         self.u=u
         self.v=v
         self.drawn=sphere(radius=rad,pos=surf.posn(u,v)+rad*surf.normal(u,v))
+        self.drawn.material = materials.emissive
 
     def move(self,du,dv):
         surf=self.surf
@@ -248,19 +249,20 @@ def createGame(levelnum):
              []]
     if levelnum == 0:
         scene.title = "Surface Explorer"
-        scene.width = 1280
-        scene.height = 720
+        scene.width = 640
+        scene.height = 360
     myscene = display.get_selected()
     if levelnum > 0:
         myscene.delete()
-        myscene = display(title="Surface Explorer", width=1280, height=720)
+        myscene = display(title="Surface Explorer", width=640, height=360)
         myscene.title = "Surface Explorer"
         myscene.select()
     if levels[levelnum] == []:
         won = True
         text(text="You Win!",pos=vector(-1,0,0),height=0.4)
         return
-    surfer = surface(levels[levelnum][0], levels[levelnum][1], levels[levelnum][2], levels[levelnum][3], levels[levelnum][4], )
+    surfer = surface(levels[levelnum][0], levels[levelnum][1], levels[levelnum][2], levels[levelnum][3], levels[levelnum][4])
+    
     surfer.follow = levels[levelnum][7]
     baller = ball(0.3, surfer, levels[levelnum][5], levels[levelnum][6])
     surfer.placeFlagRandom(0.03,1.5, 0.5)
@@ -282,6 +284,11 @@ def main():
     while True:
         rate(30)
         if won == True:
+            if myscene.kb.keys:
+                s = myscene.kb.getkey()
+                if s == 'esc':
+                    exit()
+                    return 0
             continue
         # print(liste.on_frame(contr))
         norma = liste.on_frame(contr)
@@ -291,11 +298,26 @@ def main():
                 myscene.center = baller.surf.posn(baller.u, baller.v) + baller.rad*baller.surf.normal(baller.u, baller.v)
                 if baller.surf.normal(baller.u, baller.v) != (0,0,0):
                     myscene.forward = -1*baller.surf.normal(baller.u, baller.v)
-            # helparr.axis = norm(vector(baller.surf.flg.u - baller.u, baller.surf.flg.v - baller.v, 0))
-            # helparr.pos = baller.surf.posn(baller.u, baller.v) + baller.rad*baller.surf.normal(baller.u, baller.v)
-            if baller.distToFlag() < baller.rad:
-                levelnumber += 1
-                createGame(levelnumber)
+        if myscene.kb.keys:
+            s = myscene.kb.getkey()
+            if s == 'up':
+                baller.move(0, 1.5)
+            if s == 'down':
+                baller.move(0, -1.5)
+            if s == 'right':
+                baller.move(1.5, 0)
+            if s == 'left':
+                baller.move(-1.5, 0)
+            if s == 'esc':
+                exit()
+                return 0
+            if baller.surf.follow:
+                myscene.center = baller.surf.posn(baller.u, baller.v) + baller.rad*baller.surf.normal(baller.u, baller.v)
+                if baller.surf.normal(baller.u, baller.v) != (0,0,0):
+                    myscene.forward = -1*baller.surf.normal(baller.u, baller.v)
+        if baller.distToFlag() < baller.rad:
+            levelnumber += 1
+            createGame(levelnumber)
 
             # print([norm[0].x, norm[0].y, norm[0].z])
 
